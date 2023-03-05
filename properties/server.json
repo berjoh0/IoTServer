@@ -1,0 +1,50 @@
+{
+    "http": {
+        "port": 80
+    },
+    "https": {
+        "port": 443,
+        "keyStorePath": "../../cert/openssl/keystore.jks",
+        "keyStorePassword": "qwerty",
+        "keyStoreAlgorithm": "JKS",
+        "sslAlgorithm": "TLS"
+    },
+    "mapping": {
+        "": {
+            "path": "wwwroot",
+            "defaultPage": "index.html"
+        },
+        "test": {
+            "path": "wwwtest",
+            "defaultPage": "index.html"
+        },
+        "execute": {
+            "package": "testRequests"
+        },
+        "api": {
+            "package": "testRequests.api"
+        },
+        "sensor": {
+            "package": "iotserver.sensors"
+        },
+        "showurl": {
+            "class": "testRequests.showUrl"
+        }
+    },
+    "content-type": {
+        "pdf": "application/pdf",
+        "zip": "application/zip",
+        "json": "application/json",
+        "svg": "image/svg+xml",
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "gif": "image/gif",
+        "html": "text/html",
+        "htm": "text/html",
+        "txt": "text/plain",
+        "csv": "text/csv",
+        "js": "text/javascript",
+        "ttf": "font/ttf",
+        "otf": "font/otf"
+    }
+}
