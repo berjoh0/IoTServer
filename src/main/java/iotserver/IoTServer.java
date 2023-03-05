@@ -8,8 +8,11 @@ package iotserver;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import iotserver.context.IotContext;
+import iotserver.database.IoTDatabase;
 import iotserver.listeners.HTTPSServer;
 import iotserver.listeners.HTTPServer;
+import iotserver.mapping.IoTMappings;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -21,6 +24,7 @@ import java.io.IOException;
 public class IoTServer {
 
     private static IoTMappings iotM;
+    private static IoTDatabase iotDB;
     private static IoTContentType iotContentType;
 
     /**
@@ -31,11 +35,12 @@ public class IoTServer {
             System.out.println("Properties file not entered");
             return;
         }
-        //Load properties file.
+        // Load properties file.
         byte[] propBytes;
         try {
             FileInputStream fis = new FileInputStream(args[0]);
             propBytes = fis.readAllBytes();
+            fis.close();
 
         } catch (FileNotFoundException ex) {
             System.out.println("Properties file not found");
@@ -51,19 +56,27 @@ public class IoTServer {
 
         System.out.println("prop: " + prop);
 
-        //Get mappings
+        // Get database
+        if (prop.has("database")) {
+            iotDB = new IoTDatabase(prop.getAsJsonObject("database"));
+            if (!iotDB.openDatabase(true)) {
+                return;
+            }
+        }
+
+        // Get mappings
         if (prop.has("mapping")) {
             iotM = new IoTMappings(prop.getAsJsonObject("mapping"));
         }
 
-        //Get contentTypes
+        // Get contentTypes
         if (prop.has("content-type")) {
             iotContentType = new IoTContentType(prop.getAsJsonObject("content-type"));
         }
 
-        IotContext iotContext = new IotContext(iotM, iotContentType);
+        IotContext iotContext = new IotContext(iotM, iotContentType, iotDB);
 
-        //Start servers
+        // Start servers
         if (prop.has("http")) {
             JsonObject httpObj = prop.get("http").getAsJsonObject();
             System.out.println("http: " + httpObj);

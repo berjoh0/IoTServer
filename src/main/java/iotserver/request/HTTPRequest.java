@@ -7,6 +7,8 @@ package iotserver.request;
 
 import iotserver.context.IotContext;
 import iotserver.cookie.IotCookie;
+import iotserver.database.IoTDatabase;
+
 import java.util.HashMap;
 
 /**
@@ -23,7 +25,7 @@ public class HTTPRequest {
     private String queryString = "";
     private String body = "";
     private int contentLength = 0;
-    private HashMap headers = new HashMap();
+    private HashMap<String, String> headers = new HashMap<String, String>();
 
     public HTTPRequest(IotContext iotContext) {
         this.iotContext = iotContext;
@@ -130,11 +132,11 @@ public class HTTPRequest {
     }
 
     /**
-     * @param headerName the name to set
+     * @param headerName  the name to set
      * @param headerValue the value to set
      */
     public void addHeader(String headerName, String headerValue) {
-        //Check for cookies
+        // Check for cookies
         if (headerName.equalsIgnoreCase("cookie")) {
 
         } else {
@@ -205,10 +207,15 @@ public class HTTPRequest {
     }
 
     /**
-     * @param name of cookie
+     * @param name  of cookie
      * @param value of cookie
      */
     private void addCookie(String name, String value) {
         this.cookies.put(name, new IotCookie(name, value));
     }
+
+    public IoTDatabase getDatabase() {
+        return iotContext.getIotDatabase();
+    }
+
 }

@@ -28,18 +28,22 @@ public class HTTPServer implements Runnable {
 
     @Override
     public void run() {
-
+        boolean serverOpen = true;
         try {
             int port = httpServerProperties.get("port").getAsInt();
             ServerSocket serverConnect = new ServerSocket(port);
             System.out.println("Http server Listening for connections on port : " + port + "\n");
-            while (true) {
+            while (serverOpen) {
                 Socket inSock = serverConnect.accept();
                 RequestRunner newRunner = new RequestRunner(inSock, iotContext, httpServerProperties);
                 Thread newThread = new Thread(newRunner);
                 newThread.start();
             }
+            serverConnect.close();
         } catch (IOException iOException) {
+            System.out.println("HTTP Server error");
+            iOException.printStackTrace();
+        } catch (Exception iOException) {
             System.out.println("HTTP Server error");
             iOException.printStackTrace();
         }

@@ -9,6 +9,10 @@
         "keyStoreAlgorithm": "JKS",
         "sslAlgorithm": "TLS"
     },
+    "database": {
+        "driver": "org.sqlite.JDBC",
+        "url": "jdbc:sqlite:database/test.db"
+    },
     "mapping": {
         "": {
             "path": "wwwroot",

@@ -7,9 +7,13 @@ package iotserver.dynamicClassLoader;
 
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
+
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.http.HttpResponse;
 
 /**
  *
@@ -17,7 +21,7 @@ import java.lang.reflect.Method;
  */
 public class ExecuteClass {
 
-    private Class classToRun = null;
+    private Class<?> classToRun = null;
     private Object runClassObj = null;
     private Object[] arg = null;
     private Method mth = null;
@@ -38,10 +42,15 @@ public class ExecuteClass {
 
         if (getMethod(ctr)) {
             httpResponse = invokeMethod(ctr);
+            if (httpResponse == null) {
+
+            }
+
         } else {
             httpResponse = new HTTPResponse();
             httpResponse.setReturnCode(404);
-            httpResponse.setReturnMessage("class " + ctr.getClassToLoad() + " or method " + ctr.getMethodToRun() + " not found!!");
+            httpResponse.setReturnMessage(
+                    "class " + ctr.getClassToLoad() + " or method " + ctr.getMethodToRun() + " not found!!");
         }
 
         return httpResponse;
@@ -57,13 +66,19 @@ public class ExecuteClass {
                 return false;
             }
 
-            classToRun = cloader.loadClass(ctr.getClassToLoad());
+            try {
+                classToRun = cloader.loadClass(ctr.getClassToLoad());
+
+            } catch (NoClassDefFoundError e) {
+                // TODO: handle exception
+                return false;
+            }
 
             runClassObj = null;
 
             try {
                 try {
-                    Constructor ct = classToRun.getConstructor();
+                    Constructor<?> ct = classToRun.getConstructor();
                     runClassObj = ct.newInstance();
                 } catch (InvocationTargetException e) {
 
@@ -85,6 +100,7 @@ public class ExecuteClass {
             }
 
         } catch (Exception e) {
+            System.out.println("ERRRR");
             e.printStackTrace();
             return false;
 
@@ -94,12 +110,20 @@ public class ExecuteClass {
 
     public HTTPResponse invokeMethod(ClassToRun ctr) {
         try {
-            arg = new Object[]{ctr.getHttpRequestParameter()};
+            arg = new Object[] { ctr.getHttpRequestParameter() };
             HTTPResponse httpResponse = (HTTPResponse) mth.invoke(runClassObj, arg);
             return httpResponse;
         } catch (Exception e) {
+            HTTPResponse httpResponse = new HTTPResponse();
+            httpResponse.setReturnCode(405);
+            httpResponse.setReturnMessage("Error executing " + runClassObj.toString());
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            e.printStackTrace(new PrintStream(baos));
+
+            httpResponse.setBody(baos.toByteArray());
             e.printStackTrace();
-            return null;
+            return httpResponse;
         }
     }
 

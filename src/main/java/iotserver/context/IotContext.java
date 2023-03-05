@@ -6,7 +6,9 @@
 package iotserver.context;
 
 import iotserver.IoTContentType;
-import iotserver.IoTMappings;
+import iotserver.database.IoTDatabase;
+import iotserver.mapping.IoTMapping;
+import iotserver.mapping.IoTMappings;
 import iotserver.request.HTTPRequest;
 import java.util.HashMap;
 
@@ -18,6 +20,7 @@ public class IotContext {
 
     private static IoTMappings iotMappings;
     private static IoTContentType iotContentType;
+    private static IoTDatabase iotDatabase;
 
     private static HashMap<String, Object> serverContext = new HashMap<String, Object>();
     private static HashMap<String, Object> applicationContext = new HashMap<String, Object>();
@@ -25,12 +28,13 @@ public class IotContext {
     private String application = "";
     private HashMap<String, Object> currentApplicationContext;
 
-    public IotContext(IoTMappings iotMappings, IoTContentType iotContentType) {
-        this.iotMappings = iotMappings;
-        this.iotContentType = iotContentType;
+    public IotContext(IoTMappings iotMappings, IoTContentType iotContentType, IoTDatabase iotDatabase) {
+        IotContext.iotMappings = iotMappings;
+        IotContext.iotContentType = iotContentType;
+        IotContext.iotDatabase = iotDatabase;
     }
 
-    public IoTMappings.Mapping getMapping(HTTPRequest httpRequest) {
+    public IoTMapping getMapping(HTTPRequest httpRequest) {
         return iotMappings.getMapping(httpRequest);
     }
 
@@ -50,9 +54,9 @@ public class IotContext {
         return serverContext.containsKey(key);
     }
 
+    @SuppressWarnings("unchecked")
     public void setApplication(String application) {
         this.application = application;
-
         Object tApplicationContext = applicationContext.get(this.application);
         if (tApplicationContext == null) {
             currentApplicationContext = new HashMap<String, Object>();
@@ -72,6 +76,10 @@ public class IotContext {
 
     public Object getApplicationAttribute(String key) {
         return currentApplicationContext.get(key);
+    }
+
+    public IoTDatabase getIotDatabase() {
+        return iotDatabase;
     }
 
 }

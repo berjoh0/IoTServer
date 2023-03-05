@@ -5,9 +5,12 @@
  */
 package iotserver.sensors;
 
-import com.google.gson.JsonArray;
+import java.util.Iterator;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import iotserver.database.tables.TblSensorValues;
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
 
@@ -15,7 +18,7 @@ import iotserver.response.HTTPResponse;
  *
  * @author johanbergman
  */
-public class sensor {
+public class Sensor {
 
     public HTTPResponse doGET(HTTPRequest httpRequest) {
         HTTPResponse httpResponse = new HTTPResponse();
@@ -37,17 +40,32 @@ public class sensor {
 
     public HTTPResponse doPOST(HTTPRequest httpRequest) {
         HTTPResponse httpResponse = new HTTPResponse();
+        try {
 
-        JsonObject body = JsonParser.parseString(httpRequest.getBody()).getAsJsonObject();
+            JsonObject body = JsonParser.parseString(httpRequest.getBody()).getAsJsonObject();
 
-        JsonArray bodyArray = body.getAsJsonArray("sensor");
+            JsonObject sensorVals = body.getAsJsonObject("sensor");
 
-        for (int i = 0; i < bodyArray.size(); i++) {
-            System.out.println("body:" + bodyArray.get(i));
+            TblSensorValues tblSensor = new TblSensorValues(httpRequest.getDatabase());
+
+            for (Iterator<String> it = sensorVals.keySet().iterator(); it.hasNext();) {
+                String mapp_key = it.next().toString();
+                String mapp_value = sensorVals.get(mapp_key).getAsString();
+                // System.out.println("val: " + mapp_key + "=" + mapp_value);
+                tblSensor.setValue(mapp_key, mapp_value);
+            }
+
+            if (!tblSensor.insertValues()) {
+                // TODO Save not OK
+            }
+
+            httpRequest.setApplicationAttribute("Sensors", body);
+
+            httpResponse.setReturnCode(200);
+        } catch (Exception e) {
+            httpResponse.setReturnCode(405);
+            httpResponse.setReturnMessage("Invalid sensor format: " + e.getMessage());
         }
-        httpRequest.setApplicationAttribute("Sensors", body);
-
-        httpResponse.setReturnCode(200);
 
         return httpResponse;
     }

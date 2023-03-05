@@ -13,10 +13,10 @@ import java.util.Iterator;
  *
  * @author johanbergman
  */
-public class IoTContentType extends HashMap {
+public class IoTContentType extends HashMap<String, String> {
 
     public IoTContentType(JsonObject contentTypes) {
-        for (Iterator it = contentTypes.keySet().iterator(); it.hasNext();) {
+        for (Iterator<String> it = contentTypes.keySet().iterator(); it.hasNext();) {
             String fileExtension = it.next().toString();
             String contentType = contentTypes.get(fileExtension).getAsString();
 

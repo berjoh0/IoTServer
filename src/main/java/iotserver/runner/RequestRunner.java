@@ -6,11 +6,12 @@
 package iotserver.runner;
 
 import com.google.gson.JsonObject;
-import iotserver.IoTMappings;
+
 import iotserver.context.IotContext;
 import iotserver.cookie.IotCookie;
 import iotserver.dynamicClassLoader.ExecuteClass;
 import iotserver.file.HTTPFile;
+import iotserver.mapping.IoTMapping;
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
 import java.io.BufferedOutputStream;
@@ -46,10 +47,10 @@ public class RequestRunner implements Runnable {
     @Override
     public void run() {
         DataInputStream bodyIn = null;
-        BufferedReader byteIn = null;
 
         try {
-//            in = new BufferedReader(new InputStreamReader(runnerSocket.getInputStream()));
+            // in = new BufferedReader(new
+            // InputStreamReader(runnerSocket.getInputStream()));
             bodyIn = new DataInputStream(runnerSocket.getInputStream());
 
             // we get character output stream to client (for headers)
@@ -57,7 +58,7 @@ public class RequestRunner implements Runnable {
             // get binary output stream to client (for requested data)
             dataOut = new BufferedOutputStream(runnerSocket.getOutputStream());
 
-//            String input = in.readLine();
+            // String input = in.readLine();
             int tLength = 1024;
             byte[] tInData = new byte[tLength];
 
@@ -82,9 +83,9 @@ public class RequestRunner implements Runnable {
                     BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(inDta)));
                     String tLine;
                     while ((tLine = br.readLine()) != null) {
-//                        System.out.println("t:" + tLine);
+                        // System.out.println("t:" + tLine);
                         if (!firstLineRead) {
-                            //Get method, url
+                            // Get method, url
                             StringTokenizer parser = new StringTokenizer(tLine);
                             httpRequest.setMethod(parser.nextElement().toString());
                             httpRequest.setUrl(parser.nextElement().toString());
@@ -144,15 +145,16 @@ public class RequestRunner implements Runnable {
             out.println("Server: Simple IotServer : 1.0");
             out.println("Date: " + new Date());
 
-            //Headers
+            // Headers
             for (String headerName : httpResponse.listHeaderKeys()) {
                 String headerValue = httpResponse.getHeader(headerName);
                 out.println(headerName + ": " + headerValue);
             }
-            //Cookies
+            // Cookies
             for (String cookieName : httpResponse.listCookieKeys()) {
                 IotCookie cookieValue = httpResponse.getCookie(cookieName);
-                out.println("Set-Cookie: " + cookieName + "=" + cookieValue.getValue() + "; Path=/" + httpRequest.getUrlParts()[0]);
+                out.println("Set-Cookie: " + cookieName + "=" + cookieValue.getValue() + "; Path=/"
+                        + httpRequest.getUrlParts()[0]);
             }
 
             if (!httpResponse.getContentType().isEmpty()) {
@@ -203,6 +205,14 @@ public class RequestRunner implements Runnable {
         sendResponse(httpRequest, httpR);
     }
 
+    private void sendError(HTTPRequest httpRequest, Exception ex) {
+        HTTPResponse httpR = new HTTPResponse();
+        httpR.setReturnCode(405);
+        httpR.setReturnMessage("Error:" + ex.getMessage());
+
+        sendResponse(httpRequest, httpR);
+    }
+
     private void sendInvalidMapping(HTTPRequest httpRequest) {
         HTTPResponse httpR = new HTTPResponse();
         httpR.setReturnCode(404);
@@ -213,26 +223,34 @@ public class RequestRunner implements Runnable {
 
     private void executeCall(HTTPRequest httpRequest) {
 
-        //SetCookies
-        IoTMappings.Mapping mapping = iotContext.getMapping(httpRequest);
+        // SetCookies
+        IoTMapping mapping = iotContext.getMapping(httpRequest);
 
-        if (mapping == null) {
-            sendInvalidMapping(httpRequest);
-            return;
-        } else {
-            switch (mapping.getMapped_type()) {
-                case IoTMappings.Mapping.PATH:
-                    //Read file
-                    sendResponse(httpRequest, new HTTPFile().readHTTPFile(iotContext, mapping.buildMapped_path(httpRequest.getUrl())));
-                    break;
-                case IoTMappings.Mapping.CLASS:
-                    sendResponse(httpRequest, new ExecuteClass().execute(mapping.getMapped_path(), httpRequest));
-                    break;
-                case IoTMappings.Mapping.PACKAGE:
-                    sendResponse(httpRequest, new ExecuteClass().executePackage(mapping.getMapped_path(), httpRequest));
-                    break;
+        try {
+
+            if (mapping == null) {
+                sendInvalidMapping(httpRequest);
+                return;
+            } else {
+                switch (mapping.getMapped_type()) {
+                    case IoTMapping.PATH:
+                        // Read file
+                        sendResponse(httpRequest,
+                                new HTTPFile().readHTTPFile(iotContext,
+                                        mapping.buildMapped_path(httpRequest.getUrl())));
+                        break;
+                    case IoTMapping.CLASS:
+                        sendResponse(httpRequest, new ExecuteClass().execute(mapping.getMapped_path(), httpRequest));
+                        break;
+                    case IoTMapping.PACKAGE:
+                        sendResponse(httpRequest,
+                                new ExecuteClass().executePackage(mapping.getMapped_path(), httpRequest));
+                        break;
+                }
+
             }
-
+        } catch (Exception e) {
+            sendError(httpRequest, e);
         }
     }
 
