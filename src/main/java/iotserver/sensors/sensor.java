@@ -5,8 +5,11 @@
  */
 package iotserver.sensors;
 
+import java.net.http.HttpRequest;
 import java.util.Iterator;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -43,20 +46,20 @@ public class Sensor {
         try {
 
             JsonObject body = JsonParser.parseString(httpRequest.getBody()).getAsJsonObject();
-
-            JsonObject sensorVals = body.getAsJsonObject("sensor");
+            JsonElement tSensor = body.get("sensor");
 
             TblSensorValues tblSensor = new TblSensorValues(httpRequest.getDatabase());
 
-            for (Iterator<String> it = sensorVals.keySet().iterator(); it.hasNext();) {
-                String mapp_key = it.next().toString();
-                String mapp_value = sensorVals.get(mapp_key).getAsString();
-                // System.out.println("val: " + mapp_key + "=" + mapp_value);
-                tblSensor.setValue(mapp_key, mapp_value);
-            }
+            if (tSensor.isJsonObject()) {
+                JsonObject sensorVals = body.getAsJsonObject("sensor");
+                saveSensorValues(tblSensor, httpRequest, sensorVals);
+            } else if (tSensor.isJsonArray()) {
+                JsonArray sensors = tSensor.getAsJsonArray();
 
-            if (!tblSensor.insertValues()) {
-                // TODO Save not OK
+                for (JsonElement tS : sensors) {
+                    JsonObject sensorVals = tS.getAsJsonObject();
+                    saveSensorValues(tblSensor, httpRequest, sensorVals);
+                }
             }
 
             httpRequest.setApplicationAttribute("Sensors", body);
@@ -68,5 +71,23 @@ public class Sensor {
         }
 
         return httpResponse;
+    }
+
+    private boolean saveSensorValues(TblSensorValues tblSensor, HTTPRequest httpRequest, JsonObject sensorVals) {
+
+        for (Iterator<String> it = sensorVals.keySet().iterator(); it.hasNext();) {
+            String mapp_key = it.next().toString();
+            String mapp_value = sensorVals.get(mapp_key).getAsString();
+            // System.out.println("val: " + mapp_key + "=" + mapp_value);
+            tblSensor.setValue(mapp_key, mapp_value);
+        }
+
+        if (!tblSensor.insertValues()) {
+            // TODO Save not OK
+            return false;
+        }
+
+        return true;
+
     }
 }
