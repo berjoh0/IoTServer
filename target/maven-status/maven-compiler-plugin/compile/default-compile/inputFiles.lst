@@ -1,9 +1,10 @@
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/cookie/IotCookie.java
+/Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/database/IoTDatabase.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/context/IotContext.java
+/Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/sensors/Sensor.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/runner/RequestRunner.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/request/HTTPRequest.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/response/HTTPResponse.java
-/Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/sensors/sensor.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/file/HTTPFile.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/dynamicClassLoader/ExecuteClass.java
 /Users/johanbergman/VisualStudioCode/IoTServer/src/main/java/iotserver/listeners/HTTPServer.java
