@@ -5,7 +5,6 @@
  */
 package iotserver.sensors;
 
-import java.net.http.HttpRequest;
 import java.util.Iterator;
 
 import com.google.gson.JsonArray;
