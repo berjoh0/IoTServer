@@ -20,7 +20,7 @@ import iotserver.response.HTTPResponse;
  *
  * @author johanbergman
  */
-public class Sensor {
+public class Sensors {
 
     public HTTPResponse doGET(HTTPRequest httpRequest) {
         HTTPResponse httpResponse = new HTTPResponse();
