@@ -35,7 +35,7 @@ public class RequestRunner implements Runnable {
     private JsonObject httpServerProperties;
     private Socket runnerSocket;
     private IotContext iotContext;
-    private PrintWriter out = null;
+    // private PrintWriter out = null;
     private BufferedOutputStream dataOut = null;
 
     public RequestRunner(Socket runnerSocket, IotContext iotContext, JsonObject httpServerProperties) {
@@ -54,7 +54,7 @@ public class RequestRunner implements Runnable {
             bodyIn = new DataInputStream(runnerSocket.getInputStream());
 
             // we get character output stream to client (for headers)
-            out = new PrintWriter(runnerSocket.getOutputStream());
+            // out = new PrintWriter(runnerSocket.getOutputStream());
             // get binary output stream to client (for requested data)
             dataOut = new BufferedOutputStream(runnerSocket.getOutputStream());
 
@@ -133,41 +133,47 @@ public class RequestRunner implements Runnable {
 
     private void sendResponse(HTTPRequest httpRequest, HTTPResponse httpResponse) {
         try {
-            byte[] retBytes = httpResponse.getBody();
-            int retLength = 0;
-            if (retBytes == null) {
-                retBytes = "".getBytes();
-            } else {
-                retLength = retBytes.length;
-            }
+            // Check if data already sent
+            if (httpResponse.getReturnCode() != -1) {
 
-            out.println("HTTP/1.1 " + httpResponse.getReturnCode() + " " + httpResponse.getReturnMessage());
-            out.println("Server: Simple IotServer : 1.0");
-            out.println("Date: " + new Date());
+                byte[] retBytes = httpResponse.getBody();
+                int retLength = 0;
+                if (retBytes == null) {
+                    retBytes = "".getBytes();
+                } else {
+                    retLength = retBytes.length;
+                }
 
-            // Headers
-            for (String headerName : httpResponse.listHeaderKeys()) {
-                String headerValue = httpResponse.getHeader(headerName);
-                out.println(headerName + ": " + headerValue);
-            }
-            // Cookies
-            for (String cookieName : httpResponse.listCookieKeys()) {
-                IotCookie cookieValue = httpResponse.getCookie(cookieName);
-                out.println("Set-Cookie: " + cookieName + "=" + cookieValue.getValue() + "; Path=/"
-                        + httpRequest.getUrlParts()[0]);
-            }
+                PrintWriter out = new PrintWriter(runnerSocket.getOutputStream());
 
-            if (!httpResponse.getContentType().isEmpty()) {
-                out.println("Content-type: " + httpResponse.getContentType());
-            }
-            out.println("Content-length: " + retLength);
-            out.println(); // blank line between headers and content, very important !
-            out.flush();
-            dataOut.write(retBytes, 0, retLength);
-            dataOut.flush();
+                out.println("HTTP/1.1 " + httpResponse.getReturnCode() + " " + httpResponse.getReturnMessage());
+                out.println("Server: Simple IotServer : 1.0");
+                out.println("Date: " + new Date());
 
-            out.close();
-            dataOut.close();
+                // Headers
+                for (String headerName : httpResponse.listHeaderKeys()) {
+                    String headerValue = httpResponse.getHeader(headerName);
+                    out.println(headerName + ": " + headerValue);
+                }
+                // Cookies
+                for (String cookieName : httpResponse.listCookieKeys()) {
+                    IotCookie cookieValue = httpResponse.getCookie(cookieName);
+                    out.println("Set-Cookie: " + cookieName + "=" + cookieValue.getValue() + "; Path=/"
+                            + httpRequest.getUrlParts()[0]);
+                }
+
+                if (!httpResponse.getContentType().isEmpty()) {
+                    out.println("Content-type: " + httpResponse.getContentType());
+                }
+                out.println("Content-length: " + retLength);
+                out.println(); // blank line between headers and content, very important !
+                out.flush();
+                dataOut.write(retBytes, 0, retLength);
+                dataOut.flush();
+
+                out.close();
+                dataOut.close();
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -175,27 +181,29 @@ public class RequestRunner implements Runnable {
 
     }
 
-    private void sendFileResponse(HTTPResponse httpResponse) {
-        try {
-            byte[] retBytes = httpResponse.getBody();
-            int retLength = 0;
-            if (retBytes == null) {
-                retBytes = "".getBytes();
-            } else {
-                retLength = retBytes.length;
-            }
-
-            dataOut.write(retBytes, 0, retLength);
-            dataOut.flush();
-
-            out.close();
-            dataOut.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
+    /*
+     * private void sendFileResponse(HTTPResponse httpResponse) {
+     * try {
+     * byte[] retBytes = httpResponse.getBody();
+     * int retLength = 0;
+     * if (retBytes == null) {
+     * retBytes = "".getBytes();
+     * } else {
+     * retLength = retBytes.length;
+     * }
+     * 
+     * dataOut.write(retBytes, 0, retLength);
+     * dataOut.flush();
+     * 
+     * out.close();
+     * dataOut.close();
+     * 
+     * } catch (Exception e) {
+     * e.printStackTrace();
+     * }
+     * 
+     * }
+     */
 
     private void sendInvalidMethod(HTTPRequest httpRequest, String method) {
         HTTPResponse httpR = new HTTPResponse();
@@ -236,7 +244,7 @@ public class RequestRunner implements Runnable {
                     case IoTMapping.PATH:
                         // Read file
                         sendResponse(httpRequest,
-                                new HTTPFile().readHTTPFile(iotContext,
+                                new HTTPFile().readHTTPFile(httpRequest, runnerSocket, iotContext,
                                         mapping.buildMapped_path(httpRequest.getUrl())));
                         break;
                     case IoTMapping.CLASS:
