@@ -1,4 +1,6 @@
 .DS_Store
 *.jar
 **/*.class
+**/*.lst
 database/test.db
+deployToMainRaspberry.sh
