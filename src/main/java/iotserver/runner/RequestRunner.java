@@ -136,6 +136,10 @@ public class RequestRunner implements Runnable {
             // Check if data already sent
             if (httpResponse.getReturnCode() != -1) {
 
+                if (httpResponse.getReturnCode() != 200 && httpResponse.getBody() == null) {
+                    // load default error file
+                    httpResponse.setBody(("Error::" + httpResponse.getReturnCode()).getBytes());
+                }
                 byte[] retBytes = httpResponse.getBody();
                 int retLength = 0;
                 if (retBytes == null) {
@@ -244,7 +248,7 @@ public class RequestRunner implements Runnable {
                     case IoTMapping.PATH:
                         // Read file
                         sendResponse(httpRequest,
-                                new HTTPFile().readHTTPFile(httpRequest, runnerSocket, iotContext,
+                                new HTTPFile().readHTTPFile(httpRequest, runnerSocket, iotContext, mapping,
                                         mapping.buildMapped_path(httpRequest.getUrl())));
                         break;
                     case IoTMapping.CLASS:
