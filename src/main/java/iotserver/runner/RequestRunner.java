@@ -22,6 +22,7 @@ import java.io.DataInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.http.HttpResponse;
 import java.util.Date;
 import java.util.StringTokenizer;
 import javax.net.ssl.SSLHandshakeException;
@@ -62,7 +63,8 @@ public class RequestRunner implements Runnable {
             int tLength = 1024;
             byte[] tInData = new byte[tLength];
 
-            HTTPRequest httpRequest = new HTTPRequest(iotContext);
+            HTTPResponse httpResponse = new HTTPResponse();
+            HTTPRequest httpRequest = new HTTPRequest(iotContext, httpResponse);
 
             boolean firstLineRead = false;
             boolean bodyNext = false;
@@ -104,7 +106,13 @@ public class RequestRunner implements Runnable {
                                             httpRequest.setContentLength(Integer.parseInt(tHeaders[1].trim()));
                                             break;
                                         default:
-                                            httpRequest.addHeader(headerName, tHeaders[1]);
+                                            if (headerName.equalsIgnoreCase("cookie")) {
+                                                String[] tCookie = tHeaders[1].split("=");
+                                                httpRequest.addCookie(tCookie[0].trim(), tCookie[1]);
+                                                httpResponse.addCookie(tCookie[0].trim(), tCookie[1]);
+                                            } else {
+                                                httpRequest.addHeader(headerName, tHeaders[1]);
+                                            }
                                             break;
                                     }
                                 }
@@ -119,7 +127,7 @@ public class RequestRunner implements Runnable {
                 }
             }
 
-            executeCall(httpRequest);
+            executeCall(httpRequest, httpResponse);
 
             bodyIn.close();
             runnerSocket.close();
@@ -209,60 +217,58 @@ public class RequestRunner implements Runnable {
      * }
      */
 
-    private void sendInvalidMethod(HTTPRequest httpRequest, String method) {
-        HTTPResponse httpR = new HTTPResponse();
-        httpR.setReturnCode(405);
-        httpR.setReturnMessage("Method not implemented!!!");
+    private void sendInvalidMethod(HTTPRequest httpRequest, HTTPResponse httpResponse, String method) {
+        httpResponse.setReturnCode(405);
+        httpResponse.setReturnMessage("Method not implemented!!!");
 
-        sendResponse(httpRequest, httpR);
+        sendResponse(httpRequest, httpResponse);
     }
 
-    private void sendError(HTTPRequest httpRequest, Exception ex) {
-        HTTPResponse httpR = new HTTPResponse();
-        httpR.setReturnCode(405);
-        httpR.setReturnMessage("Error:" + ex.getMessage());
+    private void sendError(HTTPRequest httpRequest, HTTPResponse httpResponse, Exception ex) {
+        httpResponse.setReturnCode(405);
+        httpResponse.setReturnMessage("Error:" + ex.getMessage());
 
-        sendResponse(httpRequest, httpR);
+        sendResponse(httpRequest, httpResponse);
     }
 
-    private void sendInvalidMapping(HTTPRequest httpRequest) {
-        HTTPResponse httpR = new HTTPResponse();
-        httpR.setReturnCode(404);
-        httpR.setReturnMessage("Mapping not found!!!");
+    private void sendInvalidMapping(HTTPRequest httpRequest, HTTPResponse httpResponse) {
+        httpResponse.setReturnCode(404);
+        httpResponse.setReturnMessage("Mapping not found!!!");
 
-        sendResponse(httpRequest, httpR);
+        sendResponse(httpRequest, httpResponse);
     }
 
-    private void executeCall(HTTPRequest httpRequest) {
+    private void executeCall(HTTPRequest httpRequest, HTTPResponse httpResponse) {
 
-        // SetCookies
         IoTMapping mapping = iotContext.getMapping(httpRequest);
 
         try {
 
             if (mapping == null) {
-                sendInvalidMapping(httpRequest);
+                sendInvalidMapping(httpRequest, httpResponse);
                 return;
             } else {
                 switch (mapping.getMapped_type()) {
                     case IoTMapping.PATH:
                         // Read file
                         sendResponse(httpRequest,
-                                new HTTPFile().readHTTPFile(httpRequest, runnerSocket, iotContext, mapping,
+                                new HTTPFile().readHTTPFile(httpRequest, httpResponse, runnerSocket, iotContext,
+                                        mapping,
                                         mapping.buildMapped_path(httpRequest.getUrl())));
                         break;
                     case IoTMapping.CLASS:
-                        sendResponse(httpRequest, new ExecuteClass().execute(mapping.getMapped_path(), httpRequest));
+                        sendResponse(httpRequest,
+                                new ExecuteClass().execute(mapping.getMapped_path(), httpRequest, httpResponse));
                         break;
                     case IoTMapping.PACKAGE:
                         sendResponse(httpRequest,
-                                new ExecuteClass().executePackage(mapping.getMapped_path(), httpRequest));
+                                new ExecuteClass().executePackage(mapping.getMapped_path(), httpRequest, httpResponse));
                         break;
                 }
 
             }
         } catch (Exception e) {
-            sendError(httpRequest, e);
+            sendError(httpRequest, httpResponse, e);
         }
     }
 

@@ -8,6 +8,8 @@ package iotserver.request;
 import iotserver.context.IotContext;
 import iotserver.cookie.IotCookie;
 import iotserver.database.IoTDatabase;
+import iotserver.response.HTTPResponse;
+import iotserver.session.HTTPSession;
 
 import java.util.HashMap;
 
@@ -18,6 +20,7 @@ import java.util.HashMap;
 public class HTTPRequest {
 
     private IotContext iotContext;
+    private HTTPResponse httpResponse;
     private String method = "";
     private String url = "";
     private String[] urlParts;
@@ -26,9 +29,11 @@ public class HTTPRequest {
     private String body = "";
     private int contentLength = 0;
     private HashMap<String, String> headers = new HashMap<String, String>();
+    private String sessionGUID = null;
 
-    public HTTPRequest(IotContext iotContext) {
+    public HTTPRequest(IotContext iotContext, HTTPResponse httpResponse) {
         this.iotContext = iotContext;
+        this.httpResponse = httpResponse;
     }
 
     public void setServerAttribute(String key, Object value) {
@@ -137,11 +142,7 @@ public class HTTPRequest {
      */
     public void addHeader(String headerName, String headerValue) {
         // Check for cookies
-        if (headerName.equalsIgnoreCase("cookie")) {
-
-        } else {
-            this.headers.put(headerName, headerValue);
-        }
+        this.headers.put(headerName, headerValue);
     }
 
     /**
@@ -210,12 +211,31 @@ public class HTTPRequest {
      * @param name  of cookie
      * @param value of cookie
      */
-    private void addCookie(String name, String value) {
+    public void addCookie(String name, String value) {
+        if (name.equals("IoTSessionID")) {
+            this.sessionGUID = value;
+        }
         this.cookies.put(name, new IotCookie(name, value));
     }
 
     public IoTDatabase getDatabase() {
         return iotContext.getIotDatabase();
+    }
+
+    public boolean createSession() {
+        this.sessionGUID = this.iotContext.createSession();
+        httpResponse.addCookie("IoTSessionID", sessionGUID);
+        this.addCookie("IoTSessionID", sessionGUID);
+        return true;
+    }
+
+    public HTTPSession getSession(boolean createIfNotExists) {
+        if (sessionGUID == null && !createIfNotExists) {
+            return null;
+        } else if (sessionGUID == null && createIfNotExists) {
+            createSession();
+        }
+        return this.iotContext.getSession(sessionGUID);
     }
 
 }

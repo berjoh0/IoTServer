@@ -13,7 +13,6 @@ import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.http.HttpResponse;
 
 /**
  *
@@ -26,28 +25,27 @@ public class ExecuteClass {
     private Object[] arg = null;
     private Method mth = null;
 
-    public HTTPResponse executePackage(String className, HTTPRequest httpRequest) {
+    public HTTPResponse executePackage(String className, HTTPRequest httpRequest, HTTPResponse httpResponse) {
 
         for (int i = 1; i < httpRequest.getUrlParts().length; i++) {
             className += ("." + httpRequest.getUrlParts()[i]);
         }
 
-        return execute(className, httpRequest);
+        return execute(className, httpRequest, httpResponse);
     }
 
-    public HTTPResponse execute(String className, HTTPRequest httpRequest) {
-        HTTPResponse httpResponse;
+    public HTTPResponse execute(String className, HTTPRequest httpRequest, HTTPResponse httpResponse) {
 
-        ClassToRun ctr = new ClassToRun(className, "do" + httpRequest.getMethod().toUpperCase(), httpRequest);
+        ClassToRun ctr = new ClassToRun(className, "do" + httpRequest.getMethod().toUpperCase(), httpRequest,
+                httpResponse);
 
         if (getMethod(ctr)) {
             httpResponse = invokeMethod(ctr);
             if (httpResponse == null) {
-
+                // TODO handle empty response
             }
 
         } else {
-            httpResponse = new HTTPResponse();
             httpResponse.setReturnCode(404);
             httpResponse.setReturnMessage(
                     "class " + ctr.getClassToLoad() + " or method " + ctr.getMethodToRun() + " not found!!");
@@ -89,7 +87,7 @@ public class ExecuteClass {
                     return false;
                 }
 
-                mth = classToRun.getMethod(ctr.getMethodToRun(), HTTPRequest.class);
+                mth = classToRun.getMethod(ctr.getMethodToRun(), HTTPRequest.class, HTTPResponse.class);
 
             } catch (Exception e) {
 
@@ -109,12 +107,12 @@ public class ExecuteClass {
     }
 
     public HTTPResponse invokeMethod(ClassToRun ctr) {
+        HTTPResponse httpResponse = ctr.getHttpResponseParameter();
         try {
-            arg = new Object[] { ctr.getHttpRequestParameter() };
-            HTTPResponse httpResponse = (HTTPResponse) mth.invoke(runClassObj, arg);
+            arg = new Object[] { ctr.getHttpRequestParameter(), ctr.getHttpResponseParameter() };
+            httpResponse = (HTTPResponse) mth.invoke(runClassObj, arg);
             return httpResponse;
         } catch (Exception e) {
-            HTTPResponse httpResponse = new HTTPResponse();
             httpResponse.setReturnCode(405);
             httpResponse.setReturnMessage("Error executing " + runClassObj.toString());
 
@@ -143,15 +141,18 @@ public class ExecuteClass {
 
     public class ClassToRun {
 
-        public ClassToRun(String classToLoad, String methodToRun, HTTPRequest httpRequestParameter) {
+        public ClassToRun(String classToLoad, String methodToRun, HTTPRequest httpRequestParameter,
+                HTTPResponse httpResponseParameter) {
             this.classToLoad = classToLoad;
             this.methodToRun = methodToRun;
             this.httpRequestParameter = httpRequestParameter;
+            this.httpResponseParameter = httpResponseParameter;
         }
 
         private String classToLoad;
         private String methodToRun;
         private HTTPRequest httpRequestParameter;
+        private HTTPResponse httpResponseParameter;
 
         /**
          * @return the classToLoad
@@ -172,6 +173,13 @@ public class ExecuteClass {
          */
         public HTTPRequest getHttpRequestParameter() {
             return httpRequestParameter;
+        }
+
+        /**
+         * @return the httpRequestParameter
+         */
+        public HTTPResponse getHttpResponseParameter() {
+            return httpResponseParameter;
         }
     }
 

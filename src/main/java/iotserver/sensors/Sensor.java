@@ -15,6 +15,7 @@ import com.google.gson.JsonParser;
 import iotserver.database.tables.TblSensorValues;
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
+import iotserver.session.HTTPSession;
 
 /**
  *
@@ -22,8 +23,14 @@ import iotserver.response.HTTPResponse;
  */
 public class Sensor {
 
-    public HTTPResponse doGET(HTTPRequest httpRequest) {
-        HTTPResponse httpResponse = new HTTPResponse();
+    public HTTPResponse doGET(HTTPRequest httpRequest, HTTPResponse httpResponse) {
+        HTTPSession session = httpRequest.getSession(true);
+        int counter = 0;
+        if (session.hasAttribute("counter")) {
+            counter = (int) session.getAttribute("counter");
+        }
+        counter++;
+        session.setAttribute("counter", counter);
 
         Object retSensors = httpRequest.getApplicationAttribute("Sensors");
 
@@ -34,14 +41,15 @@ public class Sensor {
             retObj.addProperty("Sensors", "Not Set");
         }
 
+        retObj.addProperty("counter", counter);
+
         httpResponse.setContentType("application/Json");
         httpResponse.setBody(retObj);
 
         return httpResponse;
     }
 
-    public HTTPResponse doPOST(HTTPRequest httpRequest) {
-        HTTPResponse httpResponse = new HTTPResponse();
+    public HTTPResponse doPOST(HTTPRequest httpRequest, HTTPResponse httpResponse) {
         try {
 
             JsonObject body = JsonParser.parseString(httpRequest.getBody()).getAsJsonObject();

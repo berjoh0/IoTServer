@@ -25,9 +25,9 @@ import java.util.Date;
  */
 public class HTTPFile {
 
-    public HTTPResponse readHTTPFile(HTTPRequest httpRequest, Socket runnerSocket, IotContext iotContext,
+    public HTTPResponse readHTTPFile(HTTPRequest httpRequest, HTTPResponse httpResponse, Socket runnerSocket,
+            IotContext iotContext,
             IoTMapping mapping, String fileName) {
-        HTTPResponse httpResponse = new HTTPResponse();
 
         // TODO Check filename,
         try {
