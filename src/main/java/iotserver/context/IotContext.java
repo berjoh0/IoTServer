@@ -10,7 +10,11 @@ import iotserver.database.IoTDatabase;
 import iotserver.mapping.IoTMapping;
 import iotserver.mapping.IoTMappings;
 import iotserver.request.HTTPRequest;
+import iotserver.session.HTTPSession;
+
 import java.util.HashMap;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  *
@@ -24,6 +28,7 @@ public class IotContext {
 
     private static HashMap<String, Object> serverContext = new HashMap<String, Object>();
     private static HashMap<String, Object> applicationContext = new HashMap<String, Object>();
+    private static HashMap<String, Object> sessionContext = new HashMap<String, Object>();
 
     private String application = "";
     private HashMap<String, Object> currentApplicationContext;
@@ -80,6 +85,30 @@ public class IotContext {
 
     public IoTDatabase getIotDatabase() {
         return iotDatabase;
+    }
+
+    public String createSession() {
+        String guid = UUID.randomUUID().toString();
+        sessionContext.put(guid, new HTTPSession());
+        return guid;
+    }
+
+    public boolean removeSession(String guid) {
+        sessionContext.remove(guid);
+        return true;
+    }
+
+    public HTTPSession getSession(String guid) {
+        boolean sessionExists = sessionContext.containsKey(guid);
+
+        if (!sessionExists) {
+            return null;
+        }
+
+        HTTPSession retSession = (HTTPSession) sessionContext.get(guid);
+
+        return retSession;
+
     }
 
 }
