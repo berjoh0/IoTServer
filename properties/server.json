@@ -18,21 +18,17 @@
             "path": "wwwroot",
             "defaultPage": "index.html"
         },
-        "test": {
-            "path": "wwwtest",
+        "iotadmin": {
+            "path": "/Users/johanbergman/VisualStudioCode/iotadmin/build/web",
             "defaultPage": "index.html"
         },
-        "execute": {
-            "package": "testRequests"
-        },
         "api": {
-            "package": "testRequests.api"
+            "package": "iotserver.api",
+            "defaultClass": "api"
         },
         "sensor": {
-            "package": "iotserver.sensors"
-        },
-        "showurl": {
-            "class": "testRequests.showUrl"
+            "package": "iotserver.sensors",
+            "defaultClass": "sensor"
         }
     },
     "content-type": {

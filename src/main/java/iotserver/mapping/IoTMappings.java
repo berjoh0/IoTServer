@@ -27,10 +27,12 @@ public class IoTMappings extends HashMap<String, IoTMapping> {
                         mapp_value.get("defaultPage").getAsString(), IoTMapping.PATH));
             } else if (mapp_value.has("package")) {
                 this.put(mapp_key,
-                        new IoTMapping(mapp_key, mapp_value.get("package").getAsString(), "", IoTMapping.PACKAGE));
+                        new IoTMapping(mapp_key, mapp_value.get("package").getAsString(),
+                                mapp_value.get("defaultClass").getAsString(), IoTMapping.PACKAGE));
             } else if (mapp_value.has("class")) {
                 this.put(mapp_key,
-                        new IoTMapping(mapp_key, mapp_value.get("class").getAsString(), "", IoTMapping.CLASS));
+                        new IoTMapping(mapp_key, mapp_value.get("class").getAsString(),
+                                mapp_value.get("defaultClass").getAsString(), IoTMapping.CLASS));
             }
         }
     }

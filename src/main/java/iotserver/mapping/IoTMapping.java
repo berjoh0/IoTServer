@@ -19,6 +19,20 @@ public class IoTMapping {
     }
 
     /**
+     * @return the mapped_key
+     */
+    public String getMapped_key() {
+        return mapped_key;
+    }
+
+    /**
+     * @return the mapped_key
+     */
+    public String getMapped_defaultPage() {
+        return mapped_defaultPage;
+    }
+
+    /**
      * @return the mapped_path
      */
     public String getMapped_path() {

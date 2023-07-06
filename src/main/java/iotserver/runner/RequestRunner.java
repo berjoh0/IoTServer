@@ -262,7 +262,11 @@ public class RequestRunner implements Runnable {
                         break;
                     case IoTMapping.PACKAGE:
                         sendResponse(httpRequest,
-                                new ExecuteClass().executePackage(mapping.getMapped_path(), httpRequest, httpResponse));
+                                new ExecuteClass().executePackage(
+                                        mapping.getMapped_path() + (httpRequest.getUrl().equals(mapping.getMapped_key())
+                                                ? "." + mapping.getMapped_defaultPage()
+                                                : ""),
+                                        httpRequest, httpResponse));
                         break;
                 }
 
