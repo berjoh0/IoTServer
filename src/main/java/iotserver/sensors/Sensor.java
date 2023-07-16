@@ -41,7 +41,7 @@ public class Sensor {
             retObj.addProperty("Sensors", "Not Set");
         }
 
-        retObj.addProperty("counter", counter);
+        httpResponse.setReturnCode(200);
 
         httpResponse.setContentType("application/Json");
         httpResponse.setBody(retObj);
