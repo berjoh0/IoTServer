@@ -33,6 +33,10 @@ public class IoTMappings extends HashMap<String, IoTMapping> {
                 this.put(mapp_key,
                         new IoTMapping(mapp_key, mapp_value.get("class").getAsString(),
                                 mapp_value.get("defaultClass").getAsString(), IoTMapping.CLASS));
+            } else if (mapp_value.has("remoteURL")) {
+                this.put(mapp_key,
+                        new IoTMapping(mapp_key, mapp_value.get("remoteURL").getAsString(),
+                                "", IoTMapping.PROXY));
             }
         }
     }

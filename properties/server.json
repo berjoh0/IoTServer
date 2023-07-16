@@ -29,6 +29,10 @@
         "sensor": {
             "package": "iotserver.sensors",
             "defaultClass": "sensor"
+        },
+        "prxsensor": {
+            "userLevel": "loggedin",
+            "remoteURL": "https://46.59.70.78/sensor/Sensor"
         }
     },
     "content-type": {

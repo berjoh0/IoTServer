@@ -12,6 +12,7 @@ import iotserver.cookie.IotCookie;
 import iotserver.dynamicClassLoader.ExecuteClass;
 import iotserver.file.HTTPFile;
 import iotserver.mapping.IoTMapping;
+import iotserver.proxy.proxyCall;
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
 import java.io.BufferedOutputStream;
@@ -268,6 +269,11 @@ public class RequestRunner implements Runnable {
                                                 : ""),
                                         httpRequest, httpResponse));
                         break;
+                    case IoTMapping.PROXY:
+                        sendResponse(httpRequest,
+                                new proxyCall().execute(httpRequest, httpResponse, runnerSocket, iotContext, mapping));
+                        break;
+
                 }
 
             }

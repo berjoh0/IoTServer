@@ -10,6 +10,7 @@ public class IoTMapping {
     public static final int PATH = 0;
     public static final int PACKAGE = 1;
     public static final int CLASS = 2;
+    public static final int PROXY = 3;
 
     public IoTMapping(String mapped_key, String mapped_path, String mapped_defaultPage, int mapped_type) {
         this.mapped_key = mapped_key;

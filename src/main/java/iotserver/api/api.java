@@ -1,6 +1,7 @@
 package iotserver.api;
 
-import com.google.gson.JsonObject;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
@@ -12,10 +13,12 @@ public class api {
         // JsonObject obj = new JsonObject();
         // obj.addProperty("API", "Avaible");
         // httpResponse.setBody(obj);
+
         var html = "<html>" +
                 "<body>" +
-                "APIs" +
-                "</body>" +
+                "APIs";
+
+        html += "</body>" +
                 "</html>";
         httpResponse.setBody(html.getBytes());
         return httpResponse;
