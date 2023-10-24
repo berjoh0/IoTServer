@@ -44,7 +44,9 @@ public class IoTMappings extends HashMap<String, IoTMapping> {
     public IoTMapping getMapping(HTTPRequest httpRequest) {
         String urlPart0 = httpRequest.getUrlParts()[0];
 
-        if (this.containsKey(urlPart0)) {
+        if (urlPart0.equals("proxy")) {
+            return new IoTMapping("proxy", "iotserver.proxy", "server", IoTMapping.PROXY);
+        } else if (this.containsKey(urlPart0)) {
             return (IoTMapping) this.get(urlPart0);
         } else if (this.containsKey("")) {
             return (IoTMapping) this.get("");
