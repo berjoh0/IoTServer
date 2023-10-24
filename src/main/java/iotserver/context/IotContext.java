@@ -9,11 +9,13 @@ import iotserver.IoTContentType;
 import iotserver.database.IoTDatabase;
 import iotserver.mapping.IoTMapping;
 import iotserver.mapping.IoTMappings;
+import iotserver.proxy.ProxyRemoteCallInstruction;
 import iotserver.request.HTTPRequest;
 import iotserver.session.HTTPSession;
 
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Random;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -29,6 +31,7 @@ public class IotContext {
     private static HashMap<String, Object> serverContext = new HashMap<String, Object>();
     private static HashMap<String, Object> applicationContext = new HashMap<String, Object>();
     private static HashMap<String, Object> sessionContext = new HashMap<String, Object>();
+    private static HashMap<String, ProxyRemoteCallInstruction> remoteProxyCallInstruction = new HashMap<String, ProxyRemoteCallInstruction>();
 
     private String application = "";
     private HashMap<String, Object> currentApplicationContext;
@@ -109,6 +112,36 @@ public class IotContext {
 
         return retSession;
 
+    }
+
+    public void addRemoteProxyCallInstruction(String id, String proxyClientCall) {
+        remoteProxyCallInstruction.put(id, new ProxyRemoteCallInstruction(id, proxyClientCall));
+    }
+
+    public ProxyRemoteCallInstruction getRemoteProxyClientContext(String id) {
+        /*
+         * for (String key : remoteProxyCallInstruction.keySet()) {
+         * if (instr.getId().equals(id)) {
+         * return instr.getBody();
+         * }
+         * }
+         * 
+         * return null;
+         */
+        return remoteProxyCallInstruction.get(id);
+    }
+
+    public void removeRemoteProxyClientContextIndex(String id) {
+        remoteProxyCallInstruction.remove(id);
+        /*
+         * for (ProxyRemoteCallInstruction instr : remoteProxyCallInstruction) {
+         * if (instr.getId().equals(id)) {
+         * return instr.getBody();
+         * }
+         * }
+         * 
+         * return null;
+         */
     }
 
 }

@@ -51,6 +51,15 @@ public class HTTPFile {
                             ("Content-Type: " + contentType
                                     + lineBreak).getBytes());
 
+                    out.write("Access-Control-Allow-Origin: *".getBytes());
+                    out.write("Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD".getBytes());
+                    out.write(
+                            "Access-Control-Allow-Headers: custId, appId, Origin, Content-Type, Cookie, X-CSRF-TOKEN, Accept, Authorization, X-XSRF-TOKEN, Access-Control-Allow-Origin"
+                                    .getBytes());
+                    out.write("Access-Control-Expose-Headers: Authorization, authenticated".getBytes());
+                    out.write("Access-Control-Max-Age: 1728000".getBytes());
+                    out.write("Access-Control-Allow-Credentials: true".getBytes());
+
                     if (contentType.startsWith("application")) {
                         out.write(("Content-Disposition: attachment; filename=\"" + fil.getName() + "\"" + lineBreak)
                                 .getBytes());

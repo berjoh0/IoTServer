@@ -22,7 +22,7 @@ import javax.net.ssl.SSLServerSocketFactory;
  *
  * @author johanbergman
  */
-public class HTTPSServer implements Runnable {
+public class HTTPSServer extends Thread {
 
     private JsonObject httpsServerProperties;
     private IotContext iotContext;
@@ -46,7 +46,7 @@ public class HTTPSServer implements Runnable {
 
             SSLServerSocketFactory sslssf = getSSLServerSocketFactory(jks, keyStorePassword, sslAlgorithm);
             if (sslssf != null) {
-//                var suits = sslssf.getDefaultCipherSuites();
+                // var suits = sslssf.getDefaultCipherSuites();
                 SSLServerSocket sslServerSocket = (SSLServerSocket) sslssf.createServerSocket(port);
 
                 System.out.println("Https server Listening for connections on port : " + port + "\n");
@@ -54,7 +54,8 @@ public class HTTPSServer implements Runnable {
                     Socket inSock = sslServerSocket.accept();
 
                     RequestRunner newRunner = new RequestRunner(inSock, iotContext, httpsServerProperties);
-                    Thread newThread = new Thread(newRunner);
+                    Thread newThread = new Thread(this.getThreadGroup(), newRunner,
+                            "HTTPS_" + (int) (Math.random() * 10000));
                     newThread.start();
                 }
             }
@@ -87,15 +88,19 @@ public class HTTPSServer implements Runnable {
         return null;
     }
 
-    private SSLServerSocketFactory getSSLServerSocketFactory(KeyStore trustKey, String keyStorePassword, String sslAlgorithm) {
+    private SSLServerSocketFactory getSSLServerSocketFactory(KeyStore trustKey, String keyStorePassword,
+            String sslAlgorithm) {
         try {
-            /*            TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init(trustKey);*/
+            /*
+             * TrustManagerFactory tmf =
+             * TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+             * tmf.init(trustKey);
+             */
 
             KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
             kmf.init(trustKey, keyStorePassword.toCharArray());
 
-            SSLContext context = SSLContext.getInstance(sslAlgorithm);//"SSL" "TLS"
+            SSLContext context = SSLContext.getInstance(sslAlgorithm);// "SSL" "TLS"
             context.init(kmf.getKeyManagers(), null, null);
 
             return context.getServerSocketFactory();

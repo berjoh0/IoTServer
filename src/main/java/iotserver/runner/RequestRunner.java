@@ -7,12 +7,13 @@ package iotserver.runner;
 
 import com.google.gson.JsonObject;
 
+import iotserver.common.Common;
 import iotserver.context.IotContext;
 import iotserver.cookie.IotCookie;
 import iotserver.dynamicClassLoader.ExecuteClass;
 import iotserver.file.HTTPFile;
 import iotserver.mapping.IoTMapping;
-import iotserver.proxy.proxyCall;
+import iotserver.proxy.ProxyRemoteClientCall;
 import iotserver.request.HTTPRequest;
 import iotserver.response.HTTPResponse;
 import java.io.BufferedOutputStream;
@@ -23,8 +24,9 @@ import java.io.DataInputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.http.HttpResponse;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.StringTokenizer;
 import javax.net.ssl.SSLHandshakeException;
 
@@ -32,13 +34,14 @@ import javax.net.ssl.SSLHandshakeException;
  *
  * @author johanbergman
  */
-public class RequestRunner implements Runnable {
+public class RequestRunner extends Thread {
 
     private JsonObject httpServerProperties;
     private Socket runnerSocket;
     private IotContext iotContext;
     // private PrintWriter out = null;
     private BufferedOutputStream dataOut = null;
+    private Common cmn = new Common(iotContext);
 
     public RequestRunner(Socket runnerSocket, IotContext iotContext, JsonObject httpServerProperties) {
         this.runnerSocket = runnerSocket;
@@ -81,6 +84,7 @@ public class RequestRunner implements Runnable {
                 }
 
                 byte[] inDta = baos.toByteArray();
+                System.out.println(baos.toString());
 
                 if (inDta.length > 0) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(inDta)));
@@ -128,70 +132,18 @@ public class RequestRunner implements Runnable {
                 }
             }
 
-            executeCall(httpRequest, httpResponse);
+            IoTMapping mapping = executeCall(httpRequest, httpResponse);
 
-            bodyIn.close();
-            runnerSocket.close();
+            if (mapping.getMapped_type() != IoTMapping.PROXY) {
+                bodyIn.close();
+                runnerSocket.close();
+            }
 
         } catch (SSLHandshakeException ex) {
         } catch (Exception ex) {
             System.out.println("HTTP Runner error");
             ex.printStackTrace();
         }
-    }
-
-    private void sendResponse(HTTPRequest httpRequest, HTTPResponse httpResponse) {
-        try {
-            // Check if data already sent
-            if (httpResponse.getReturnCode() != -1) {
-
-                if (httpResponse.getReturnCode() != 200 && httpResponse.getBody() == null) {
-                    // load default error file
-                    httpResponse.setBody(("Error::" + httpResponse.getReturnCode()).getBytes());
-                }
-                byte[] retBytes = httpResponse.getBody();
-                int retLength = 0;
-                if (retBytes == null) {
-                    retBytes = "".getBytes();
-                } else {
-                    retLength = retBytes.length;
-                }
-
-                PrintWriter out = new PrintWriter(runnerSocket.getOutputStream());
-
-                out.println("HTTP/1.1 " + httpResponse.getReturnCode() + " " + httpResponse.getReturnMessage());
-                out.println("Server: Simple IotServer : 1.0");
-                out.println("Date: " + new Date());
-
-                // Headers
-                for (String headerName : httpResponse.listHeaderKeys()) {
-                    String headerValue = httpResponse.getHeader(headerName);
-                    out.println(headerName + ": " + headerValue);
-                }
-                // Cookies
-                for (String cookieName : httpResponse.listCookieKeys()) {
-                    IotCookie cookieValue = httpResponse.getCookie(cookieName);
-                    out.println("Set-Cookie: " + cookieName + "=" + cookieValue.getValue() + "; Path=/"
-                            + httpRequest.getUrlParts()[0]);
-                }
-
-                if (!httpResponse.getContentType().isEmpty()) {
-                    out.println("Content-type: " + httpResponse.getContentType());
-                }
-                out.println("Content-length: " + retLength);
-                out.println(); // blank line between headers and content, very important !
-                out.flush();
-                dataOut.write(retBytes, 0, retLength);
-                dataOut.flush();
-
-                out.close();
-                dataOut.close();
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     /*
@@ -222,24 +174,24 @@ public class RequestRunner implements Runnable {
         httpResponse.setReturnCode(405);
         httpResponse.setReturnMessage("Method not implemented!!!");
 
-        sendResponse(httpRequest, httpResponse);
+        cmn.sendResponse(httpRequest, httpResponse, runnerSocket, dataOut);
     }
 
     private void sendError(HTTPRequest httpRequest, HTTPResponse httpResponse, Exception ex) {
         httpResponse.setReturnCode(405);
         httpResponse.setReturnMessage("Error:" + ex.getMessage());
 
-        sendResponse(httpRequest, httpResponse);
+        cmn.sendResponse(httpRequest, httpResponse, runnerSocket, dataOut);
     }
 
     private void sendInvalidMapping(HTTPRequest httpRequest, HTTPResponse httpResponse) {
         httpResponse.setReturnCode(404);
         httpResponse.setReturnMessage("Mapping not found!!!");
 
-        sendResponse(httpRequest, httpResponse);
+        cmn.sendResponse(httpRequest, httpResponse, runnerSocket, dataOut);
     }
 
-    private void executeCall(HTTPRequest httpRequest, HTTPResponse httpResponse) {
+    private IoTMapping executeCall(HTTPRequest httpRequest, HTTPResponse httpResponse) {
 
         IoTMapping mapping = iotContext.getMapping(httpRequest);
 
@@ -247,32 +199,55 @@ public class RequestRunner implements Runnable {
 
             if (mapping == null) {
                 sendInvalidMapping(httpRequest, httpResponse);
-                return;
+                return mapping;
             } else {
                 switch (mapping.getMapped_type()) {
                     case IoTMapping.PATH:
                         // Read file
-                        sendResponse(httpRequest,
+                        cmn.sendResponse(httpRequest,
                                 new HTTPFile().readHTTPFile(httpRequest, httpResponse, runnerSocket, iotContext,
                                         mapping,
-                                        mapping.buildMapped_path(httpRequest.getUrl())));
+                                        mapping.buildMapped_path(httpRequest.getUrl())),
+                                runnerSocket, dataOut);
                         break;
                     case IoTMapping.CLASS:
-                        sendResponse(httpRequest,
-                                new ExecuteClass().execute(mapping.getMapped_path(), httpRequest, httpResponse));
+                        cmn.sendResponse(httpRequest,
+                                new ExecuteClass().execute(mapping.getMapped_path(), httpRequest, httpResponse),
+                                runnerSocket, dataOut);
                         break;
                     case IoTMapping.PACKAGE:
-                        sendResponse(httpRequest,
+                        cmn.sendResponse(httpRequest,
                                 new ExecuteClass().executePackage(
                                         mapping.getMapped_path() + (httpRequest.getUrl().equals(mapping.getMapped_key())
                                                 ? "." + mapping.getMapped_defaultPage()
                                                 : ""),
-                                        httpRequest, httpResponse));
+                                        httpRequest, httpResponse),
+                                runnerSocket, dataOut);
                         break;
                     case IoTMapping.PROXY:
-                        sendResponse(httpRequest,
-                                new proxyCall().execute(httpRequest, httpResponse, runnerSocket, iotContext, mapping));
-                        break;
+                        Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
+                        for (Iterator<Thread> it = threadSet.iterator(); it.hasNext();) {
+                            Thread th = it.next();
+
+                            if (th.getThreadGroup().getName().equals("ProxyRemoteClients")) {
+                                Thread th2 = new Thread(th.getThreadGroup(),
+                                        new ProxyRemoteClientCall(httpRequest, httpResponse, runnerSocket, dataOut,
+                                                iotContext),
+                                        "ProxyRemoteClient" + httpRequest.getQueryString());
+
+                                th2.start();
+                                ;
+                                break;
+                            }
+                        }
+
+                        /*
+                         * while (true) {
+                         * Thread.sleep(5000);
+                         * System.out.println(getName() + " waiting");
+                         * }
+                         */
+                        // Wait for remote call,
 
                 }
 
@@ -280,6 +255,8 @@ public class RequestRunner implements Runnable {
         } catch (Exception e) {
             sendError(httpRequest, httpResponse, e);
         }
+
+        return mapping;
     }
 
 }

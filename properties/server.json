@@ -4,7 +4,8 @@
     },
     "https": {
         "port": 443,
-        "keyStorePath": "../../cert/openssl/keystore.jks",
+        "keyStorePath_old": "../../cert/openssl/keystore.jks",
+        "keyStorePath": "../../cert2/ca/keystore.jks",
         "keyStorePassword": "qwerty",
         "keyStoreAlgorithm": "JKS",
         "sslAlgorithm": "TLS"
@@ -35,6 +36,12 @@
             "remoteURL": "https://46.59.70.78/sensor/Sensor"
         }
     },
+    "proxy-clientt": [
+        {
+            "token": "12345",
+            "remoteURL": "https://127.0.0.1"
+        }
+    ],
     "content-type": {
         "pdf": "application/pdf",
         "zip": "application/zip",

@@ -5,17 +5,21 @@
  */
 package iotserver;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import iotserver.context.IotContext;
 import iotserver.database.IoTDatabase;
 import iotserver.listeners.HTTPSServer;
 import iotserver.listeners.HTTPServer;
+import iotserver.listeners.ProxyClientServer;
 import iotserver.mapping.IoTMappings;
+import iotserver.proxy.ProxyRemoteClientManager;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  *
@@ -76,18 +80,39 @@ public class IoTServer {
 
         IotContext iotContext = new IotContext(iotM, iotContentType, iotDB);
 
+        ThreadGroup proxyClients = new ThreadGroup("ProxyClients");
+        ThreadGroup httpListeners = new ThreadGroup("HttpListeners");
+        new Thread(new ThreadGroup("ProxyRemoteClients"),
+                new ProxyRemoteClientManager(iotContext),
+                "ProxyRemoteManager").start();
+
         // Start servers
         if (prop.has("http")) {
             JsonObject httpObj = prop.get("http").getAsJsonObject();
             System.out.println("http: " + httpObj);
             HTTPServer mainHttpServer = new HTTPServer(iotContext, httpObj);
-            new Thread(mainHttpServer).start();
+            new Thread(httpListeners, mainHttpServer, "HTTPListener").start();
         }
         if (prop.has("https")) {
             JsonObject httpsObj = prop.get("https").getAsJsonObject();
             System.out.println("https: " + httpsObj);
             HTTPSServer mainHttpsServer = new HTTPSServer(iotContext, httpsObj);
-            new Thread(mainHttpsServer).start();
+            new Thread(httpListeners, mainHttpsServer, "HTTPSListener").start();
+        }
+        // Start remote proxy clients
+        if (prop.has("proxy-client")) {
+            try {
+                Thread.sleep(2000);
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
+
+            for (Iterator<JsonElement> it = prop.getAsJsonArray("proxy-client").iterator(); it.hasNext();) {
+                JsonElement pxc = it.next();
+                new Thread(proxyClients, new ProxyClientServer(iotContext, pxc.getAsJsonObject())).start();
+                ;
+            }
+
         }
 
     }

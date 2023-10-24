@@ -16,7 +16,7 @@ import java.net.Socket;
  *
  * @author johanbergman
  */
-public class HTTPServer implements Runnable {
+public class HTTPServer extends Thread {
 
     private JsonObject httpServerProperties;
     private IotContext iotContext;
@@ -36,7 +36,8 @@ public class HTTPServer implements Runnable {
             while (serverOpen) {
                 Socket inSock = serverConnect.accept();
                 RequestRunner newRunner = new RequestRunner(inSock, iotContext, httpServerProperties);
-                Thread newThread = new Thread(newRunner);
+                Thread newThread = new Thread(this.getThreadGroup(), newRunner,
+                        "HTTP_" + (int) (Math.random() * 10000));
                 newThread.start();
             }
             serverConnect.close();
