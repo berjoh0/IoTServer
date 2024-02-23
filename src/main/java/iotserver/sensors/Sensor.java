@@ -24,23 +24,11 @@ import iotserver.session.HTTPSession;
 public class Sensor {
 
     public HTTPResponse doGET(HTTPRequest httpRequest, HTTPResponse httpResponse) {
-        HTTPSession session = httpRequest.getSession(true);
-        int counter = 0;
-        if (session.hasAttribute("counter")) {
-            counter = (int) session.getAttribute("counter");
-        }
-        counter++;
-        session.setAttribute("counter", counter);
 
-        Object retSensors = httpRequest.getApplicationAttribute("Sensors");
+        System.out.println("doGet");
 
-        JsonObject retObj = new JsonObject();
-        if (retSensors != null) {
-            retObj = (JsonObject) retSensors;
-        } else {
-            retObj.addProperty("Sensors", "Not Set");
-        }
-
+        TblSensorValues tblSensor = new TblSensorValues(httpRequest.getDatabase());
+        JsonObject retObj = tblSensor.getLatestValues();
         httpResponse.setReturnCode(200);
 
         httpResponse.setContentType("application/Json");
@@ -69,7 +57,7 @@ public class Sensor {
                 }
             }
 
-            httpRequest.setApplicationAttribute("Sensors", body);
+            httpRequest.setApplicationAttribute("Sensor", body);
 
             httpResponse.setReturnCode(200);
         } catch (Exception e) {
