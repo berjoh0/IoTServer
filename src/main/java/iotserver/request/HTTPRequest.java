@@ -230,6 +230,13 @@ public class HTTPRequest {
     }
 
     public HTTPSession getSession(boolean createIfNotExists) {
+        if (sessionGUID != null && createIfNotExists) {
+            // Check if exists
+            if (!iotContext.existsSession(sessionGUID)) {
+                sessionGUID = null;
+            }
+        }
+
         if (sessionGUID == null && !createIfNotExists) {
             return null;
         } else if (sessionGUID == null && createIfNotExists) {

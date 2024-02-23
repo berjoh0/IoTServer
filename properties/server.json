@@ -12,7 +12,7 @@
     },
     "database": {
         "driver": "org.sqlite.JDBC",
-        "url": "jdbc:sqlite:database/test.db"
+        "url": "jdbc:sqlite:database/test.sqlite"
     },
     "mapping": {
         "": {
@@ -20,7 +20,7 @@
             "defaultPage": "index.html"
         },
         "iotadmin": {
-            "path": "/Users/johanbergman/VisualStudioCode/iotadmin/build/web",
+            "path": "../iotadmin/build/web",
             "defaultPage": "index.html"
         },
         "api": {
@@ -29,7 +29,11 @@
         },
         "sensor": {
             "package": "iotserver.sensors",
-            "defaultClass": "sensor"
+            "defaultClass": "Sensor"
+        },
+        "time": {
+            "package": "iotserver.time",
+            "defaultClass": "Time"
         },
         "prxsensor": {
             "userLevel": "loggedin",
