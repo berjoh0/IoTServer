@@ -7,6 +7,9 @@ package iotserver.database.tables;
 
 import java.util.HashMap;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import iotserver.database.IoTDatabase;
 import simpleDB.database.SimpleDBDatabase;
 import simpleDB.field.SimpleDBField;
@@ -30,6 +33,20 @@ public class TblSensorValues extends SimpleDBTable {
 
     public TblSensorValues(IoTDatabase iotDatabase) {
         super((SimpleDBDatabase) iotDatabase, tableFields, tableName);
+    }
+
+    public JsonObject getLatestValues() {
+        String sql = "select sv1.siteID,sv1.sensorID,sv1.timestamp,sv1.value from " +
+                "(SELECT \"siteID\",\"sensorID\", \"value\",timestamp," +
+                " row_number() over (partition by \"siteID\", \"sensorID\" order by timestamp desc) as _rn" +
+                "     FROM \"SensorValue\" " +
+                ") as sv1" +
+                " where sv1._rn = 1";
+        JsonObject retValues = new JsonObject();
+        JsonArray tArray = selectValues(sql);
+        retValues.add("sensor", tArray);
+
+        return retValues;
     }
 
 }
