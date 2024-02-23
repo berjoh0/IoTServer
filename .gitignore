@@ -4,3 +4,5 @@
 **/*.lst
 database/test.db
 deployToMainRaspberry.sh
+getdb.sh
+database/*

@@ -101,6 +101,11 @@ public class IotContext {
         return true;
     }
 
+    public boolean existsSession(String guid) {
+        boolean sessionExists = sessionContext.containsKey(guid);
+        return sessionExists;
+    }
+
     public HTTPSession getSession(String guid) {
         boolean sessionExists = sessionContext.containsKey(guid);
 
